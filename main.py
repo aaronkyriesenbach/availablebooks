@@ -21,7 +21,7 @@ if __name__ == "__main__":
     soup = BeautifulSoup(d.page_source, "html.parser")
 
     wtr_books = []
-    book_container_elements = soup.css.select("div.flex.justify-center")
+    book_container_elements = soup.css.select("div.flex.flex-col.justify-center")
     for book_container_element in book_container_elements:
         title_element = book_container_element.css.select_one("a.font-semibold.text-lg > span:not(.text-xs)")
         author_element = book_container_element.css.select_one("span > span > a.items-center > span")
