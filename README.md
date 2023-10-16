@@ -1,0 +1,2 @@
+Basic script to obtain want-to-read books from Hardcover and search configured libraries for those books.
+Utilizes Selenium to search library websites (which load results dynamically) and BeautifulSoup to parse those results.
