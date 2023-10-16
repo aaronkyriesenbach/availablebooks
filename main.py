@@ -23,8 +23,12 @@ if __name__ == "__main__":
     wtr_books = []
     book_container_elements = soup.css.select("div.flex.flex-col.justify-center")
     for book_container_element in book_container_elements:
-        title_element = book_container_element.css.select_one("a.font-semibold.text-lg > span:not(.text-xs)")
-        author_element = book_container_element.css.select_one("span > span > a.items-center > span")
+        title_element = book_container_element.css.select_one(
+            "a.font-semibold.text-lg > span:not(.text-xs)"
+        )
+        author_element = book_container_element.css.select_one(
+            "span > span > a.items-center > span"
+        )
 
         book = Book(title_element.text)
 
@@ -44,7 +48,12 @@ if __name__ == "__main__":
         for library in libraries:
             print(f"Searching {library.name}")
             url = library.base_url + urllib.parse.urlencode(
-                {"query": (book.title + " " + book.author) if book.author is not None else book.title})
+                {
+                    "query": (book.title + " " + book.author)
+                    if book.author is not None
+                    else book.title
+                }
+            )
             d.get(url)
 
             soup = BeautifulSoup(d.page_source, "html.parser")
