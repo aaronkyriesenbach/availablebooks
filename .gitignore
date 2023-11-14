@@ -1,3 +1,5 @@
 .idea
 __pycache__
 chromedriver.exe
+chromedriver
+venv
