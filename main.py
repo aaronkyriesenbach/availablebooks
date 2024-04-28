@@ -1,12 +1,14 @@
-import time
-import urllib.parse
+from urllib.parse import urlencode
 
 from bs4 import BeautifulSoup
+from gql import Client, gql
+from gql.transport.aiohttp import AIOHTTPTransport
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 
-from constants import want_to_read_url, libraries
+from constants import libraries
 from models.Book import Book
+from secrets import auth_header
 
 if __name__ == "__main__":
     options = ChromeOptions()
@@ -15,25 +17,39 @@ if __name__ == "__main__":
 
     print("Getting want to read titles")
 
-    d.get(want_to_read_url)
-    time.sleep(1)
+    transport = AIOHTTPTransport(url="https://hardcover-production.hasura.app/v1/graphql", headers=auth_header)
+    client = Client(transport=transport, fetch_schema_from_transport=False)
 
-    soup = BeautifulSoup(d.page_source, "html.parser")
+    query = gql(
+        """
+        query GetWantToReadBooks {
+            me {
+                user_books(where: {status_id: {_eq: 1}}) {
+                    book {
+                        title
+                        contributions {
+                            author {
+                                name
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    """
+    )
+
+    result = client.execute(query)
 
     wtr_books = []
-    book_container_elements = soup.css.select("div.flex.flex-col.justify-center")
-    for book_container_element in book_container_elements:
-        title_element = book_container_element.css.select_one(
-            "a.font-semibold.text-lg > span:not(.text-xs)"
-        )
-        author_element = book_container_element.css.select_one(
-            "span > span > a.items-center > span"
-        )
+    for item in result["me"][0]["user_books"]:
+        title = item["book"]["title"]
 
-        book = Book(title_element.text)
+        book = Book(title)
 
-        if author_element is not None:
-            book.author = author_element.text
+        if len(item["book"]["contributions"]) > 0:
+            author = item["book"]["contributions"][0]["author"]["name"]
+            book.author = author
 
         wtr_books.append(book)
 
@@ -47,7 +63,7 @@ if __name__ == "__main__":
 
         for library in libraries:
             print(f"Searching {library.name}")
-            url = library.base_url + urllib.parse.urlencode(
+            url = library.base_url + urlencode(
                 {
                     "query": (book.title + " " + book.author)
                     if book.author is not None
@@ -65,10 +81,9 @@ if __name__ == "__main__":
                 print(f"Potential match for {book.title} found at {library.name}")
                 matching_libraries.append(library.name)
 
-        all_matches[book.title] = matching_libraries
+        if len(matching_libraries) > 0:
+            all_matches[book.title] = matching_libraries
 
     print("Results:")
-
     for title in all_matches:
-        if len(all_matches[title]) > 0:
-            print(f"{title}: {all_matches[title]}")
+        print(f"{title}: {all_matches[title]}")
