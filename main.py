@@ -8,6 +8,9 @@ from selenium.webdriver.chrome.options import Options as ChromeOptions
 
 from constants import libraries
 from models.Book import Book
+
+# Hardcover API key goes in secrets.py, format:
+# auth_header={"authorization": "token_here"}
 from secrets import auth_header
 
 if __name__ == "__main__":
