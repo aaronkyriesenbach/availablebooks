@@ -6,8 +6,11 @@ from gql.transport.aiohttp import AIOHTTPTransport
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 
+import multiprocessing
+
 from constants import libraries
 from models.Book import Book
+from search_library import search_library
 
 # Hardcover API key goes in secrets.py, format:
 # auth_header={"authorization": "token_here"}
@@ -60,32 +63,19 @@ if __name__ == "__main__":
 
     all_matches = {}
 
-    for book in wtr_books:
-        print(f"Checking availability for {book.title}")
-        matching_libraries = []
+    requests = []
+    for b in wtr_books:
+        for l in libraries:
+            requests.append((b, l))
 
-        for library in libraries:
-            print(f"Searching {library.name}")
-            url = library.base_url + urlencode(
-                {
-                    "query": (book.title + " " + book.author)
-                    if book.author is not None
-                    else book.title
-                }
-            )
-            d.get(url)
+    pool = multiprocessing.Pool()
+    outputs = pool.starmap(search_library, requests)
 
-            soup = BeautifulSoup(d.page_source, "html.parser")
+    for val in outputs:
+        book_title = val[0]
+        library = val[1]
 
-            search_match_elements = soup.css.select(".TitleInfo > .title-name > a")
-            search_matches = list(map(lambda e: e.text.strip(), search_match_elements))
-
-            if book.title in search_matches:
-                print(f"Potential match for {book.title} found at {library.name}")
-                matching_libraries.append(library.name)
-
-        if len(matching_libraries) > 0:
-            all_matches[book.title] = matching_libraries
+        all_matches[book_title] = [library] + all_matches[book_title] if book_title in all_matches else [library]
 
     print("Results:")
     for title in all_matches:
