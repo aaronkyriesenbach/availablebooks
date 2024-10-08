@@ -6,6 +6,8 @@ from gql.transport.aiohttp import AIOHTTPTransport
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 
+from time import time
+
 import multiprocessing
 
 from constants import libraries
@@ -17,6 +19,8 @@ from search_library import search_library
 from secrets import auth_header
 
 if __name__ == "__main__":
+    start_time = time()
+
     options = ChromeOptions()
     options.add_argument("--headless=new")
     d = webdriver.Chrome(options)
@@ -72,11 +76,15 @@ if __name__ == "__main__":
     outputs = pool.starmap(search_library, requests)
 
     for val in outputs:
-        book_title = val[0]
-        library = val[1]
+        if val:
+            book_title = val[0]
+            library = val[1]
 
-        all_matches[book_title] = [library] + all_matches[book_title] if book_title in all_matches else [library]
+            all_matches[book_title] = [library] + all_matches[book_title] if book_title in all_matches else [library]
 
     print("Results:")
     for title in all_matches:
         print(f"{title}: {all_matches[title]}")
+
+    end_time = time()
+    print(f"Total time: {end_time - start_time}")
