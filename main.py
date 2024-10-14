@@ -1,6 +1,8 @@
+import os
 from urllib.parse import urlencode
 
 from bs4 import BeautifulSoup
+from dotenv import load_dotenv
 from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
 from selenium import webdriver
@@ -9,16 +11,18 @@ from selenium.webdriver.chrome.options import Options as ChromeOptions
 from constants import libraries
 from models.Book import Book
 
-# Hardcover API key goes in secrets.py, format:
-# auth_header={"authorization": "token_here"}
-from secrets import auth_header
-
 if __name__ == "__main__":
+    load_dotenv()
+
     options = ChromeOptions()
     options.add_argument("--headless=new")
     d = webdriver.Chrome(options)
 
     print("Getting want to read titles")
+
+    auth_header = {
+        "authorization": os.environ["HARDCOVER_AUTH_TOKEN"]
+    }
 
     transport = AIOHTTPTransport(url="https://hardcover-production.hasura.app/v1/graphql", headers=auth_header)
     client = Client(transport=transport, fetch_schema_from_transport=False)
