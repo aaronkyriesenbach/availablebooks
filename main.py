@@ -16,6 +16,7 @@ if __name__ == "__main__":
 
     options = ChromeOptions()
     options.add_argument("--headless=new")
+    options.add_argument("--disable-dev-shm-usage")
     d = webdriver.Chrome(options)
 
     print("Getting want to read titles")
